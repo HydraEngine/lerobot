@@ -21,7 +21,6 @@ from lerobot.datasets.lerobot_dataset import LeRobotDataset
 # Local imports
 from XLeVR.vr_monitor import VRMonitor
 from lerobot.robots.xlerobot import XLerobotConfig, XLerobot
-from lerobot.utils.robot_utils import busy_wait
 from lerobot.model.SO101Robot import SO101Kinematics
 
 # Setup logging
