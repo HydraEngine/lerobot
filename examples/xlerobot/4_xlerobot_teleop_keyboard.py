@@ -9,13 +9,12 @@ PYTHONPATH=src python -m examples.xlerobot.teleoperate_Keyboard
 '''
 
 import time
-import numpy as np
-import math
 
-from lerobot.robots.xlerobot import XLerobotConfig, XLerobot
-from lerobot.utils.visualization_utils import init_rerun, log_rerun_data
+import math
 from lerobot.model.SO101Robot import SO101Kinematics
+from lerobot.robots.xlerobot import XLerobotConfig, XLerobot
 from lerobot.teleoperators.keyboard.teleop_keyboard import KeyboardTeleop, KeyboardTeleopConfig
+from lerobot.utils.visualization_utils import init_rerun, log_rerun_data
 
 # Keymaps (semantic action: key)
 LEFT_KEYMAP = {
@@ -469,11 +468,7 @@ def main():
             right_action = right_arm.p_control_action(robot)
             head_action = head_control.p_control_action(robot)
 
-            # Base action
-            keyboard_keys = np.array(list(pressed_keys))
-            base_action = robot._from_keyboard_to_base_action(keyboard_keys) or {}
-
-            action = {**left_action, **right_action, **head_action, **base_action}
+            action = {**left_action, **right_action, **head_action}
             robot.send_action(action)
 
             obs = robot.get_observation()

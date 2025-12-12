@@ -8,14 +8,10 @@ PYTHONPATH=src python -m lerobot.robots.xlerobot.xlerobot_host --robot.id=my_xle
 PYTHONPATH=src python -m examples.xlerobot.teleoperate_XBOX
 '''
 
-import time
-import numpy as np
-import math
 import pygame
-
+from lerobot.model.SO101Robot import SO101Kinematics
 from lerobot.robots.xlerobot import XLerobotConfig, XLerobot
 from lerobot.utils.visualization_utils import init_rerun, log_rerun_data
-from lerobot.model.SO101Robot import SO101Kinematics
 
 # Keymaps (semantic action: controller mapping) - Intuitive human control
 LEFT_KEYMAP = {
@@ -44,12 +40,6 @@ RIGHT_KEYMAP = {
     'wrist_roll+': 'rb_right', 'wrist_roll-': 'rb_left',
     # Right trigger controls right gripper
     'gripper+': 'right_trigger',
-}
-
-# Base control keymap - Only forward/backward and rotate left/right
-BASE_KEYMAP = {
-    'forward': 'dpad_down', 'backward': 'dpad_up',
-    'rotate_left': 'dpad_left', 'rotate_right': 'dpad_right',
 }
 
 # Global reset key for all components
@@ -361,69 +351,6 @@ def get_xbox_key_state(joystick, keymap):
     return state
 
 
-def get_base_action(joystick, robot):
-    """
-    Get base action from XBOX controller input - simplified to only forward/backward and rotate.
-    """
-    # Read controller state
-    buttons = [joystick.get_button(i) for i in range(joystick.get_numbuttons())]
-    hats = joystick.get_hat(0) if joystick.get_numhats() > 0 else (0, 0)
-
-    # Get pressed keys for base control
-    pressed_keys = set()
-
-    # Map controller inputs to keyboard-like keys for base control
-    if hats[1] == 1:  # D-pad up
-        pressed_keys.add('k')  # Forward
-    if hats[1] == -1:  # D-pad down
-        pressed_keys.add('i')  # Backward
-    if hats[0] == -1:  # D-pad left
-        pressed_keys.add('u')  # Rotate left
-    if hats[0] == 1:  # D-pad right
-        pressed_keys.add('o')  # Rotate right
-
-    # Convert to numpy array and get base action
-    keyboard_keys = np.array(list(pressed_keys))
-    base_action = robot._from_keyboard_to_base_action(keyboard_keys) or {}
-
-    return base_action
-
-
-def get_base_speed_control(joystick):
-    """
-    Get base speed control from XBOX controller - LB for speed decrease, RB for speed increase.
-    Returns speed multiplier (1.0, 2.0, or 3.0) and prints current speed level.
-    """
-    # Read controller state
-    buttons = [joystick.get_button(i) for i in range(joystick.get_numbuttons())]
-
-    # Get LB and RB states
-    lb_pressed = bool(buttons[4]) if len(buttons) > 4 else False
-    rb_pressed = bool(buttons[5]) if len(buttons) > 5 else False
-
-    # Get current speed level from global variable
-    global current_base_speed_level
-    if 'current_base_speed_level' not in globals():
-        current_base_speed_level = 1  # Default speed level
-
-    # Speed control logic
-    if lb_pressed and not rb_pressed:
-        # LB pressed alone - decrease speed
-        if current_base_speed_level > 1:
-            current_base_speed_level -= 1
-            print(f"[BASE] Speed decreased to level {current_base_speed_level}")
-    elif rb_pressed and not lb_pressed:
-        # RB pressed alone - increase speed
-        if current_base_speed_level < 3:
-            current_base_speed_level += 1
-            print(f"[BASE] Speed increased to level {current_base_speed_level}")
-
-    # Map speed level to multiplier
-    speed_multiplier = float(current_base_speed_level)
-
-    return speed_multiplier
-
-
 def main():
     FPS = 30
     robot_config = XLerobotConfig()
@@ -437,7 +364,7 @@ def main():
         print(robot)
         return
 
-    _init_rerun(session_name="xlerobot_teleop_xbox")
+    init_rerun(session_name="xlerobot_teleop_xbox")
 
     # Init XBOX controller
     pygame.init()
@@ -488,18 +415,8 @@ def main():
             right_action = right_arm.p_control_action(robot)
             head_action = head_control.p_control_action(robot)
 
-            # Get base action and speed control from controller
-            base_action = get_base_action(joystick, robot)
-            speed_multiplier = get_base_speed_control(joystick)
-
-            # Apply speed multiplier to base actions if they exist
-            if base_action:
-                for key in base_action:
-                    if 'vel' in key or 'velocity' in key:  # Apply to velocity commands
-                        base_action[key] *= speed_multiplier
-
             # Merge all actions
-            action = {**left_action, **right_action, **head_action, **base_action}
+            action = {**left_action, **right_action, **head_action}
             robot.send_action(action)
 
             obs = robot.get_observation()
