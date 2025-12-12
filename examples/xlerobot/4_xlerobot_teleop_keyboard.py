@@ -388,14 +388,14 @@ def main():
     FPS = 50
     # ip = "192.168.1.123"  # This is for zmq connection
     ip = "localhost"  # This is for local/wired connection
-    robot_name = "my_xlerobot_pc"
+    robot_name = "my_awesome_xlerobot"
 
     # For zmq connection
     # robot_config = XLerobotClientConfig(remote_ip=ip, id=robot_name)
     # robot = XLerobotClient(robot_config)    
 
     # For local/wired connection
-    robot_config = XLerobotConfig()
+    robot_config = XLerobotConfig(id=robot_name)
     robot = XLerobot(robot_config)
 
     try:

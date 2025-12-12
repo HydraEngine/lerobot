@@ -353,7 +353,7 @@ def get_xbox_key_state(joystick, keymap):
 
 def main():
     FPS = 30
-    robot_config = XLerobotConfig()
+    robot_config = XLerobotConfig(id="my_awesome_xlerobot")
     robot = XLerobot(robot_config)
     try:
         robot.connect()
